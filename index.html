@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>HN Thread Viewer</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+</head>
+<body>
+    <div id="app">
+        <div id="top-bar">
+            <input type="text" id="hn-input" placeholder="Enter HN URL or ID">
+            <button id="load-btn">Load</button>
+        </div>
+
+        <div id="viewer-container">
+            <div id="comment-card" class="card">
+                <div class="card-header">
+                    <span id="author"></span>
+                    <span id="time"></span>
+                    <span id="depth-indicator"></span>
+                </div>
+                <div id="comment-body" class="card-body">
+                    <div id="comment-text"></div>
+                    <div id="tap-hint">Double tap for full text</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="modal" class="modal hidden">
+            <div class="modal-content">
+                <span id="close-modal" class="close">&times;</span>
+                <div id="full-comment-text"></div>
+            </div>
+        </div>
+
+        <div id="loader" class="loader hidden">
+            <div class="spinner"></div>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
