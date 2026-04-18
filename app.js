@@ -1,10 +1,6 @@
 const API_BASE = 'https://hacker-news.firebaseio.com/v0';
 const cache = new Map();
 
-// Skip criteria constants
-const MIN_SENTENCES = 2;
-const MIN_WORDS = 20;
-
 const elements = {
     input: document.getElementById('hn-input'),
     loadBtn: document.getElementById('load-btn'),
@@ -67,52 +63,9 @@ async function loadThread(idOrUrl) {
     }
 }
 
-function shouldSkip(item) {
-    if (!item || !item.text) return false;
-    // Stories or items with titles are usually worth seeing
-    if (item.title) return false;
-
-    const text = item.text.replace(/<[^>]*>/g, ''); // Basic HTML strip
-    const words = text.trim().split(/\s+/).filter(w => w.length > 0);
-    const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
-
-    return sentences.length <= MIN_SENTENCES || words.length < MIN_WORDS;
-}
-
-async function navigateTo(id, depth, parentItem, direction = 0) {
+async function navigateTo(id, depth, parentItem) {
     const item = await fetchItem(id);
     if (!item) return;
-
-    if (shouldSkip(item)) {
-        if (direction === 1) { // Child
-            if (item.kids && item.kids.length > 0) {
-                return await navigateTo(item.kids[0], depth + 1, item, direction);
-            } else {
-                // Skips all the way down, just return or show something?
-                // Let's fallback to current state
-            }
-        } else if (direction === 2) { // Parent
-            if (item.parent) {
-                const gp = await fetchItem(item.parent);
-                const ggp = (gp && gp.parent) ? await fetchItem(gp.parent) : null;
-                return await navigateTo(gp.id, depth - 1, ggp, direction);
-            }
-        } else if (direction === 3) { // Next Sibling
-            if (parentItem && parentItem.kids) {
-                const idx = parentItem.kids.indexOf(item.id);
-                if (idx < parentItem.kids.length - 1) {
-                    return await navigateTo(parentItem.kids[idx + 1], depth, parentItem, direction);
-                }
-            }
-        } else if (direction === 4) { // Prev Sibling
-            if (parentItem && parentItem.kids) {
-                const idx = parentItem.kids.indexOf(item.id);
-                if (idx > 0) {
-                    return await navigateTo(parentItem.kids[idx - 1], depth, parentItem, direction);
-                }
-            }
-        }
-    }
 
     currentState.currentItem = item;
     currentState.depth = depth;
@@ -175,7 +128,7 @@ hammer.on('swipeleft', async () => {
     // Child
     if (currentState.currentItem.kids && currentState.currentItem.kids.length > 0) {
         animateSwipe('swipe-left');
-        await navigateTo(currentState.currentItem.kids[0], currentState.depth + 1, currentState.currentItem, 1);
+        await navigateTo(currentState.currentItem.kids[0], currentState.depth + 1, currentState.currentItem);
     } else {
         shakeCard();
     }
@@ -189,7 +142,7 @@ hammer.on('swiperight', async () => {
         if (currentState.parentItem.parent) {
             grandparent = await fetchItem(currentState.parentItem.parent);
         }
-        await navigateTo(currentState.parentItem.id, currentState.depth - 1, grandparent, 2);
+        await navigateTo(currentState.parentItem.id, currentState.depth - 1, grandparent);
     } else {
         shakeCard();
     }
@@ -199,7 +152,7 @@ hammer.on('swipeup', async () => {
     // Next Sibling
     if (currentState.siblings && currentState.siblingIndex < currentState.siblings.length - 1) {
         animateSwipe('swipe-up');
-        await navigateTo(currentState.siblings[currentState.siblingIndex + 1], currentState.depth, currentState.parentItem, 3);
+        await navigateTo(currentState.siblings[currentState.siblingIndex + 1], currentState.depth, currentState.parentItem);
     } else {
         shakeCard();
     }
@@ -209,7 +162,7 @@ hammer.on('swipedown', async () => {
     // Prev Sibling
     if (currentState.siblings && currentState.siblingIndex > 0) {
         animateSwipe('swipe-down');
-        await navigateTo(currentState.siblings[currentState.siblingIndex - 1], currentState.depth, currentState.parentItem, 4);
+        await navigateTo(currentState.siblings[currentState.siblingIndex - 1], currentState.depth, currentState.parentItem);
     } else {
         shakeCard();
     }
