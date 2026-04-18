@@ -51,7 +51,7 @@ async function loadThread(idOrUrl) {
     } else if (idOrUrl.includes('item/')) {
         id = idOrUrl.split('item/')[1].split('/')[0].split('?')[0];
     }
-    
+
     const item = await fetchItem(id);
     if (item) {
         // If it's a story, load the first comment if available
@@ -69,14 +69,14 @@ async function navigateTo(id, depth, parentItem) {
 
     currentState.currentItem = item;
     currentState.depth = depth;
-    
+
     // If parentItem is not provided but exists in item, fetch it to restore context
     if (!parentItem && item.parent) {
         parentItem = await fetchItem(item.parent);
     }
-    
+
     currentState.parentItem = parentItem;
-    
+
     if (parentItem && parentItem.kids) {
         currentState.siblings = parentItem.kids;
         currentState.siblingIndex = parentItem.kids.indexOf(item.id);
@@ -91,10 +91,16 @@ async function navigateTo(id, depth, parentItem) {
 function renderCurrentItem() {
     const item = currentState.currentItem;
     elements.author.textContent = item.by || '[deleted]';
-    elements.time.textContent = new Date(item.time * 1000).toLocaleTimeString();
+
+    if (currentState.siblings.length > 0) {
+        elements.time.textContent = `${currentState.siblingIndex + 1} of ${currentState.siblings.length}`;
+    } else {
+        elements.time.textContent = '';
+    }
+
     elements.depthIndicator.textContent = `Depth: ${currentState.depth}`;
     elements.commentText.innerHTML = item.text || (item.title ? `<strong>${item.title}</strong><br>${item.url || ''}` : '[no text]');
-    
+
     // Update visual cue
     const hue = 20; // Base orange
     const lightness = Math.min(50 + currentState.depth * 5, 90);
